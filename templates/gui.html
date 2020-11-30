@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ficbook parser</title>
+    <style>
+        @font-face {
+            font-family: "Roboto Light";
+            src: url("Roboto-Light.ttf") format('ttf');
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Roboto Light", Arial, Helvetica, sans-serif;
+            font-weight: 300;
+            background-color: #f6ecda;
+        }
+        .hidden {
+            display: none !important;
+        }
+        section {
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        .welcome {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: #f6ecda;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            color: #4f2d01;
+        }
+        .welcome-hide {
+            animation: fade;
+            /*animation-delay: 2s;*/
+            animation-duration: 0.4s;
+            animation-direction: normal;
+            animation-fill-mode: forwards;
+            animation-timing-function: ease-out;
+        }
+
+        .login {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /*color: rgb(212, 162, 86);*/
+        }
+        .login input {
+            display: block;
+            margin: 20px auto 10px;
+            padding: 5px 15px;
+            height: 50px;
+            width: 400px;
+            font-size: 2rem;
+            background: none;
+            border: none;
+            outline-color: rgb(212, 162, 86);
+            border-bottom: solid 2px rgb(212, 162, 86);
+            text-align: center;
+        }
+        .login input[type=submit] {
+            width: 200px;
+            color:  rgb(212, 162, 86);
+        }
+        .login p {
+            max-width: 60%;
+            text-align: center;
+            margin: 0 auto;
+            padding: 20px 0px 10px;
+        }
+        .login h3 {
+            color: red;
+            text-align: center;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loading div {
+            display: inline-block;
+        }
+        .loading-text-new {
+            animation: loading-text-new;
+            animation-duration: 0.1s;
+            animation-timing-function: ease-in;
+        }
+        #loading-dots {
+            width: 20px;
+        }
+
+        .results {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .results .container {
+            width: 30%;
+            animation: results-show;
+            animation-duration: 0.5s;
+            animation-timing-function: ease-in;
+        }
+        .results .profile {
+            width: 100%;
+            height: 100px;
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            /*padding: 10px 30px;*/
+            font-size: 2rem;
+        }
+        .results .profile img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #ccc;
+            margin: 0 35px 0 30px;
+        }
+        .results ul {
+            /*list-style-type: none;*/
+            padding: 15px;
+        }
+        .results li {
+            padding: 5px 15px;
+        }
+
+        @keyframes fade {
+            0% {
+                transform: translateY(0px);
+                opacity: 1;
+                visibility: visible;
+            }
+            99% {
+                transform: translateY(-100px);
+                opacity: 0;
+                visibility: visible;
+            }
+            100% {
+                opacity: 0;
+                visibility: hidden;
+                height: 0;
+            }
+        }
+        @keyframes hide {
+            0% {
+                display: initial;
+            }
+            100% {
+                display: none;
+            }
+        }
+        @keyframes loading-text-new {
+            0% {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes loading-text-old {
+            0% {
+                transform: translateY(0px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-20);
+                opacity: 0;
+            }
+        }
+        @keyframes results-show {
+            0% {
+                transform: translateY(100vh);
+            }
+            100% {
+                transform: translateY(0);
+            }
+        }
+
+        /* Change the white to any color ;) */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active  {
+            -webkit-box-shadow: 0 0 0 30px #f6ecda inset !important;
+        }
+
+    </style>
+</head>
+<body>
+    <div id="status"></div>
+    <div id="result"></div>
+    <section class="welcome">
+        <span>Ficbook Parser</span>
+    </section>
+    <section class="login hidden">
+        <form action="" onsubmit="return false">
+            <input type="text" name="uname" id="uname" placeholder="Your username" required>
+            <input type="password" name="upswd" id="upswd" placeholder="Your password" required>
+            <h3 id="errmsg" class="hidden">Wrong credentials</h3>
+            <p>By submitting, you consent that only you are responsible for any consequences possibly caused by this program.</p>
+            <input type="submit" value="Submit" id="submit">
+        </form>
+    </section>
+    <section class="loading hidden">
+        <div id="loading-text">Starting</div>
+        <div id="loading-dots">...</div>
+    </section>
+    <section class="results hidden">
+        <div class="container">
+            <div class="profile">
+                <img src="" alt="Avatar">
+                <span>Username</span>
+            </div>
+            <div class="content">
+                <ul>
+                    General info:
+                    <li>Total pages read: <span>23635</span></li>
+                    <li>Total fanfics read: <span>536</span></li>
+                    <li>The most liked fandom is '<span>Fanfic</span>' with <span>470</span> fanfics read.</li>
+                    <li>The most recently you read '<span>An interesting title</span>' from '<span>Just another fandom</span>'.</li>
+                </ul>
+                <ul>
+                    Fandom info:
+                    <li>Total pages read: <span>23635</span></li>
+                    <li>Total fanfics read: <span>536</span></li>
+                    <li>The most liked fandom is <span>Fanfic</span> with <span>470</span> fanfics read.</li>
+                    <li>The most recently you read '<span>An interesting title</span>' from '<span>Just another fandom</span>'.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+    <script>
+        let LOADING_INTERVAL, GETSTATUS_INTERVAL, STATUS, FINISHED = false;
+        document.getElementById('submit').addEventListener('click', submit);
+        GETSTATUS_INTERVAL = setInterval(getstatus, 1000);
+
+        function hide_welcome() {
+            const element = document.querySelector('.welcome');
+            element.classList.add('welcome-hide');
+            const login = document.querySelector('.login');
+            login.classList.remove('hidden');
+        }
+
+
+        function hide_login() {
+            const element = document.querySelector('.login');
+            element.classList.add('hidden');
+        }
+
+        function login_error() {
+            const errmsg = document.querySelector('#errmsg');
+            errmsg.classList.remove('hidden');
+            const login = document.querySelector('.login');
+            login.classList.remove('hidden');
+        }
+
+        function loading_start() {
+            const element = document.querySelector('.loading');
+            element.classList.remove('hidden');
+            LOADING_INTERVAL = setInterval(() => {
+                const element = document.getElementById('loading-dots');
+                if (element.textContent === '...') {
+                    element.textContent = '.';
+                } else {
+                    element.textContent += '.';
+                }
+            }, 1000/3);
+        }
+
+        function loading_stop() {
+            const element = document.querySelector('.loading');
+            element.classList.add('hidden');
+            clearInterval(LOADING_INTERVAL);
+        }
+
+        function titleCase(str) {
+           let splitStr = str.toLowerCase().split(' ');
+           for (let i = 0; i < splitStr.length; i++) {
+               splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);
+           }
+           return splitStr.join(' ');
+        }
+
+        function loading_change(text) {
+            const element = document.getElementById('loading-text');
+            if (STATUS === text) return;
+            if (text.includes('parser:')) {
+                text = text.replace('parser:', '');
+            }
+            if (text.includes('extracting_page:')) {
+                text = text.split(':').join(' ');
+            }
+            if (text.includes('_')) {
+                text = text.split('_').join(' ');
+            }
+            text = titleCase(text);
+            element.classList.remove('loading-text-new');
+            setTimeout(() => {
+                element.textContent = text;
+                element.classList.add('loading-text-new');
+            }, 500)
+        }
+
+        async function getstatus() {
+            if (FINISHED) return clearInterval(GETSTATUS_INTERVAL);
+            sendData('/status', 'GET').then(async response => {
+                console.log('Status: ', response.status);
+                STATUS = response.status;
+                switch (response.status) {
+                    default:
+                        loading_change(response.status);
+                        break
+                    case 'created':
+                        hide_welcome();
+                        break
+                    case 'parser:login_error':
+                        login_error();
+                        break
+                    case 'parser:extraction_successful':
+                        await sendData('/result', 'GET').then(response => {
+                            console.log('Result: ', response.data);
+                            loading_stop();
+                            showresults(response.data);
+                            FINISHED = true;
+                        })
+                }
+            })
+        }
+
+        async function submit() {
+            hide_login();
+            loading_start();
+            const uname = document.getElementById('uname').value.trim();
+            const upswd = document.getElementById('upswd').value.trim();
+            if (uname === '' || upswd === '') return;
+            console.log('submit');
+            FINISHED = false;
+            sendData('/login', 'POST', {
+                uname: uname,
+                upswd: upswd
+            }).then(response => {
+                console.log(response)
+            })
+        }
+
+        async function sendData(url = '', method='POST', data = '') {
+            let request = {
+                method: method,
+                cache: 'no-cache',
+                mode: 'same-origin', // no-cors, *cors, same-origin
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }
+            if (data !== '') {
+                request.body = JSON.stringify(data)
+            }
+            const response = await fetch(url, request).then(r => r.json());
+            if (response.OK === false) {
+                console.error('REQUEST ERROR');
+                return false
+            }
+            return response;
+        }
+
+        function showresults(PDATA) {
+            const section = document.querySelector('.results');
+            const profile = document.querySelector('.profile');
+            const content = document.querySelector('.content');
+            profile.querySelector('span').textContent = PDATA.user;
+            profile.querySelector('img').setAttribute('src', PDATA.avatar);
+            content.innerHTML = generalinfo(PDATA) + fandomsinfo(PDATA) + fanficsinfo(PDATA);
+            section.classList.remove('hidden');
+            loading_stop();
+
+            function generalinfo(PDATA) {
+                return `
+                    <ul>
+                        General info:
+                        <li>Total pages read: <span>${PDATA.pageCount}</span></li>
+                        <li>Total fanfics read: <span>${PDATA.fanfics.length}</span></li>
+                        <li>The most liked fandom is '<span>${PDATA.fandoms[0].name}</span>' with <span>${PDATA.fandoms[0].amount}</span> fanfics read.</li>
+                        <li>The most recently you read '<span>${PDATA.fanfics[0].title}</span>' from '<span>${PDATA.fanfics[0].fandom}</span>'.</li>
+                    </ul>
+                `
+            }
+            function fandomsinfo(PDATA) {
+                let r = `<ul>Top 10 fandoms info (Fandom name — number of fanfics you read):`;
+                for (let i = 0; i < Math.min(10, PDATA.fandoms.length); i++) {
+                    r += `<li>${PDATA.fandoms[i].name} — ${PDATA.fandoms[i].amount}</li>`;
+                }
+                r += `</ul>`;
+                return r;
+            }
+            function fanficsinfo(PDATA) {
+                let r = `<ul>Top 10 fanfics info (Fanfic name (size) — fandom):`;
+                for (let i = 0; i < Math.min(10, PDATA.fanfics.length); i++) {
+                    r += `<li>${PDATA.fanfics[i].title} (${PDATA.fanfics[i].size}) — ${PDATA.fanfics[i].fandom}</li>`;
+                }
+                r += `</ul>`;
+                return r;
+            }
+        }
+        // loading_start();
+        // setTimeout(loading_stop, 15000);
+    </script>
+</body>
+</html>
