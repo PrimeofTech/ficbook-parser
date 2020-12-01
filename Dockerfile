@@ -17,15 +17,9 @@ RUN unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 # set display port to avoid crash
 ENV DISPLAY=:99
 ENV chromeinpath=True
-ENV UNAME=jsnfrank
-ENV UPSWD=f5tLs0MBKRjG
 
-EXPOSE 5000:5000
+RUN pip install --upgrade pip
 
-#RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-#RUN pip install -r ./requirements.txt
-
-RUN pip install selenium beautifulsoup4 Flask
-
-CMD ["python", "./app.py"]
+CMD ["python", "app.py"]
