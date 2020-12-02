@@ -402,7 +402,7 @@
                 return r;
             }
             function fanficsinfo(PDATA) {
-                let r = `<ul>Top 10 fanfics info (Fanfic name (size) — fandom):`;
+                let r = `<ul>Last 10 fanfics info (Fanfic name (size) — fandom):`;
                 for (let i = 0; i < Math.min(10, PDATA.fanfics.length); i++) {
                     r += `<li>${PDATA.fanfics[i].title} (${PDATA.fanfics[i].size}) — ${PDATA.fanfics[i].fandom}</li>`;
                 }
