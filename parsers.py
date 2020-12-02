@@ -68,6 +68,7 @@ class Parser(threading.Thread):
         if not self.login(self.uname, self.upswd):
             self.setstatus('parser:login_error')
             self.print('Login failed... Aborting!')
+            self.close()
             return False, 'login_error'
         self.setstatus('parser:login_successful')
         self.print('Login was successful...')
@@ -77,12 +78,14 @@ class Parser(threading.Thread):
         if not success:
             self.setstatus('parser:extraction_error')
             self.print('Extraction failed... Aborting!')
+            self.close()
             return False, 'extraction_error'
         self.setstatus('parser:extraction_successful')
         self.print('Extraction was successful... Finishing!')
         if self.databasereport:
             db.update({'data': data}, Session.id == self.id)
         self.savetojson()
+        self.close()
         return True, data
 
     def initdriver(self):
