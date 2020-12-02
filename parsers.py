@@ -294,8 +294,8 @@ class Parser(threading.Thread):
 
     def savetojson(self):
         if not os.path.exists('data/out') or not os.path.exists('data/a'):
-            os.makedirs('data/out')
-            os.makedirs('data/a')
+            os.makedirs('data/out', exist_ok=True)
+            os.makedirs('data/a', exist_ok=True)
         jsondata = json.dumps(self.data, ensure_ascii=False)
         now = datetime.now()
         date = now.strftime("%Y%m%d")
