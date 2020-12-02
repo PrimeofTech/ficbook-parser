@@ -7,13 +7,16 @@ from os import environ
 from bs4 import BeautifulSoup
 from datetime import datetime
 from getpass import getpass
-import shelve
 import sys
 import threading
 import os
 import platform
 import json
 import time
+
+from tinydb import TinyDB, Query
+db = TinyDB('data/db.json')
+Session = Query()
 
 
 class Parser(threading.Thread):
@@ -43,8 +46,7 @@ class Parser(threading.Thread):
     def setstatus(self, status):
         if not self.databasereport:
             return
-        with shelve.open('data/sessions', 'c', writeback=True) as db:
-            db[self.id]['status'] = status
+        db.update({'status': status}, Session.id == self.id)
 
     def print(self, *text):
         content = ''
@@ -79,8 +81,7 @@ class Parser(threading.Thread):
         self.setstatus('parser:extraction_successful')
         self.print('Extraction was successful... Finishing!')
         if self.databasereport:
-            with shelve.open('data/sessions', 'c', writeback=True) as db:
-                db[self.id]['data'] = data
+            db.update({'data': data}, Session.id == self.id)
         self.savetojson()
         return True, data
 

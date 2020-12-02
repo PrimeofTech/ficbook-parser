@@ -1,10 +1,10 @@
 import hashlib
 from functools import wraps
-from flask import Flask, g, request, make_response, render_template, redirect, url_for
+from flask import Flask, request, make_response, render_template, redirect, url_for
 from os import path
 from datetime import datetime
 from json import dumps
-import shelve
+from tinydb import TinyDB, Query
 import time
 import random
 
@@ -15,6 +15,8 @@ SESSION_LENGTH = 30 * 60  # seconds
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'A super duper badass hard to guess key'  # TODO: get this from env
+db = TinyDB('data/db.json')
+Session = Query()
 
 
 def get_random_string(length=64, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
@@ -42,16 +44,14 @@ def session_required(f):
     def decorated_function(*args, **kwargs):
         if haskey(request.cookies, 'SESSID', checkempty=True):
             sid = request.cookies['SESSID']
-            with shelve.open('data/sessions', 'c') as db:
-                if haskey(db, sid) and haskey(db[sid], 'exp') and db[sid]['exp'] > int(time.time()):
-                    sess = db[sid]
-                    g.id = sid
-                    g.session = sess
-                    return f(*args, **kwargs)
-                else:
-                    response = make_response(redirect(url_for('index')))
-                    response.set_cookie('SESSID', '')
-                    return response
+            sess = db.get(Session.id == request.cookies['SESSID'])
+            if sess and sess['exp'] <= int(time.time()):
+                response = make_response(redirect(url_for('index')))
+                response.set_cookie('SESSID', '')
+                return response
+            request.id = sid
+            request.session = sess
+            return f(*args, **kwargs)
         else:
             response = make_response(redirect(url_for('index', next=request.path)))
             response.set_cookie('SESSID', '')
@@ -85,14 +85,14 @@ def index():
         sid = get_random_string()
         now = int(time.time())
         sess = {
+            'id': sid,
             'iss': 'test-srv-1', 'sub': 'session', 'aud': 'filtered',  # statics
             'exp': now + SESSION_LENGTH,
             'iat': now,
             'ip': request.remote_addr,
             'status': 'created'
         }
-        with shelve.open('data/sessions', 'c') as database:
-            database[sid] = sess
+        db.insert(sess)
         response = make_response(redirect(url_for('run')))
         response.set_cookie('SESSID', sid, max_age=SESSION_LENGTH,
                             # secure=True
@@ -103,9 +103,9 @@ def index():
 @app.route('/run', methods=['GET', 'POST'])
 @session_required
 def run():
-    stats = f"You are authorized with SESSID: {g.id} " \
-           f"which was initialized at {datetime.fromtimestamp(g.session['iat'])} " \
-           f"and expires at {datetime.fromtimestamp(g.session['exp'])}."
+    stats = f"You are authorized with SESSID: {request.id} " \
+           f"which was initialized at {datetime.fromtimestamp(request.session['iat'])} " \
+           f"and expires at {datetime.fromtimestamp(request.session['exp'])}."
     response = make_response(render_template('gui.html', stats=stats))
     return response
 
@@ -117,36 +117,33 @@ def login():
         return dumps({'OK': False}), 400
     uname = request.json['uname']
     upswd = request.json['upswd']
-    with shelve.open('data/sessions', 'c', writeback=True) as database:
-        database[g.id]['uname'] = uname
-        database[g.id]['upswd'] = upswd
-        database[g.id]['status'] = 'launched'
-    Parser(g.id, uname, upswd, headless=True, verbose=True).start()
+    sess = db.get(Session.id == request.id)
+    db.update({
+        'uname': uname,
+        'status': 'launched'
+    }, Session.id == request.id)
+    Parser(request.id, uname, upswd, headless=True, verbose=True).start()  # TODO: headless=True
     return dumps({'OK': True})
 
 
 @app.route('/status')
 @session_required
 def status():
-    try:
-        with shelve.open('data/sessions', 'c') as database:
-            return dumps({'status': database[g.id]['status']})
-    except KeyError:
+    session = db.get(Session.id == request.id)
+    if session is None:
         return dumps({'OK': False}), 500
+    return dumps({'status': session['status']})
 
 
 @app.route('/result')
 @session_required
 def result():
-    try:
-        with shelve.open('data/sessions', 'c') as database:
-            if not haskey(database, g.id):
-                return dumps({'OK': False}), 404
-            if database[g.id]['status'] != 'parser:extraction_successful':
-                return dumps({'OK': True, 'data': {}})
-            return dumps({'OK': True, 'data': database[g.id]['data']})
-    except KeyError:
+    session = db.get(Session.id == request.cookies['SESSID'])
+    if session is None:
         return dumps({'OK': False}), 500
+    if session['status'] != 'parser:extraction_successful':
+        return dumps({'OK': True, 'data': {}})
+    return dumps({'OK': True, 'data': session['data']})
 
 
 if __name__ == '__main__':
