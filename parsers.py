@@ -85,7 +85,6 @@ class Parser(threading.Thread):
         if self.databasereport:
             db.update({'data': data}, Session.id == self.id)
         self.savetojson()
-        self.close()
         return True, data
 
     def initdriver(self):
