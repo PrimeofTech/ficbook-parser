@@ -122,7 +122,7 @@
             background-color: #ccc;
             margin: 0 35px 0 30px;
         }
-        .results ul {
+        .results ul, .results ol {
             /*list-style-type: none;*/
             padding: 15px;
         }
@@ -238,7 +238,7 @@
         </div>
     </section>
     <script>
-        let LOADING_INTERVAL, GETSTATUS_INTERVAL, STATUS, FINISHED = false;
+        let LOADING_INTERVAL = 'stopped', GETSTATUS_INTERVAL, FINISHED = false;
         document.getElementById('submit').addEventListener('click', submit);
         GETSTATUS_INTERVAL = setInterval(getstatus, 1000);
 
@@ -263,6 +263,7 @@
         }
 
         function loading_start() {
+            if (LOADING_INTERVAL !== 'stopped') return
             const element = document.querySelector('.loading');
             element.classList.remove('hidden');
             LOADING_INTERVAL = setInterval(() => {
@@ -279,6 +280,7 @@
             const element = document.querySelector('.loading');
             element.classList.add('hidden');
             clearInterval(LOADING_INTERVAL);
+            LOADING_INTERVAL = 'stopped';
         }
 
         function titleCase(str) {
@@ -291,7 +293,6 @@
 
         function loading_change(text) {
             const element = document.getElementById('loading-text');
-            if (STATUS === text) return;
             if (text.includes('parser:')) {
                 text = text.replace('parser:', '');
             }
@@ -301,7 +302,8 @@
             if (text.includes('_')) {
                 text = text.split('_').join(' ');
             }
-            text = titleCase(text);
+            text = titleCase(text).trim();
+            if (element.textContent === text) return;
             element.classList.remove('loading-text-new');
             setTimeout(() => {
                 element.textContent = text;
@@ -313,23 +315,30 @@
             if (FINISHED) return clearInterval(GETSTATUS_INTERVAL);
             sendData('/status', 'GET').then(async response => {
                 console.log('Status: ', response.status);
-                STATUS = response.status;
+                loading_change(response.status);
+                // FIXME: when parser is scraping and page is reloaded, it does not automatically show loading screen
                 switch (response.status) {
-                    default:
-                        loading_change(response.status);
-                        break
-                    case 'created':
+                    case 'launched':
                         hide_welcome();
+                        break
+                    case 'parser:driver_initialized':
+                        if (LOADING_INTERVAL === 'stopped') {
+                            hide_welcome();
+                            hide_login();
+                            loading_start();
+                        }
                         break
                     case 'parser:login_error':
                         login_error();
                         break
                     case 'parser:extraction_successful':
                         await sendData('/result', 'GET').then(response => {
+                            FINISHED = true;
                             console.log('Result: ', response.data);
+                            hide_welcome()
+                            hide_login();
                             loading_stop();
                             showresults(response.data);
-                            FINISHED = true;
                         })
                 }
             })
@@ -379,6 +388,10 @@
             profile.querySelector('span').textContent = PDATA.user;
             profile.querySelector('img').setAttribute('src', PDATA.avatar);
             content.innerHTML = generalinfo(PDATA) + fandomsinfo(PDATA) + fanficsinfo(PDATA);
+            try {
+                document.getElementById('showallfanfics-btn').addEventListener('click', () => showallfanfics(PDATA));
+                document.getElementById('showallfandoms-btn').addEventListener('click', () => showallfandoms(PDATA));
+            } catch (e) {}
             section.classList.remove('hidden');
             loading_stop();
 
@@ -394,24 +407,46 @@
                 `
             }
             function fandomsinfo(PDATA) {
-                let r = `<ul>Top 10 fandoms info (Fandom name — number of fanfics you read):`;
+                let r = `<ol id="fandoms">Top 10 fandoms info (Fandom name — number of fanfics you read):`;
                 for (let i = 0; i < Math.min(10, PDATA.fandoms.length); i++) {
                     r += `<li>${PDATA.fandoms[i].name} — ${PDATA.fandoms[i].amount}</li>`;
                 }
-                r += `</ul>`;
+                if (PDATA.fandoms.length > 10) {
+                    r += `<a href="#fandoms" id="showallfandoms-btn">Show all</a>`;
+                }
+                r += `</ol>`;
                 return r;
             }
             function fanficsinfo(PDATA) {
-                let r = `<ul>Last 10 fanfics info (Fanfic name (size) — fandom):`;
+                let r = `<ol id="fanfics">Last 10 fanfics info (Fanfic name (size) — fandom):`;
                 for (let i = 0; i < Math.min(10, PDATA.fanfics.length); i++) {
-                    r += `<li>${PDATA.fanfics[i].title} (${PDATA.fanfics[i].size}) — ${PDATA.fanfics[i].fandom}</li>`;
+                    r += `<li>${PDATA.fanfics[i].title} (${PDATA.fanfics[i].size}) — ${PDATA.fanfics[i].fandom.join(', ')}</li>`;
                 }
-                r += `</ul>`;
+                if (PDATA.fanfics.length > 10) {
+                    r += `<a href="#fanfics" id="showallfanfics-btn">Show all</a>`;
+                }
+                r += `</ol>`;
                 return r;
             }
         }
-        // loading_start();
-        // setTimeout(loading_stop, 15000);
+
+        function showallfandoms (PDATA) {
+            if (PDATA.fandoms.length <= 10) return
+            const fandoms_ul = document.getElementById('fandoms');
+            fandoms_ul.querySelector('#showallfandoms-btn').remove();
+            for (let i = 10; i < PDATA.fandoms.length; i++) {
+                    fandoms_ul.innerHTML += `<li>${PDATA.fandoms[i].name} — ${PDATA.fandoms[i].amount}</li>`;
+            }
+        }
+
+        function showallfanfics (PDATA) {
+            if (PDATA.fanfics.length <= 10) return
+            const fanfics_ul = document.getElementById('fanfics');
+            fanfics_ul.querySelector('#showallfanfics-btn').remove();
+            for (let i = 10; i < PDATA.fanfics.length; i++) {
+                fanfics_ul.innerHTML += `<li>${PDATA.fanfics[i].title} (${PDATA.fanfics[i].size}) — ${PDATA.fanfics[i].fandom.join(', ')}</li>`;
+            }
+        }
     </script>
 </body>
 </html>

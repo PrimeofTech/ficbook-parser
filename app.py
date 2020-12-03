@@ -10,8 +10,10 @@ import random
 
 from parsers import Parser
 
+# TODO: log IP and User-Agent for security and analytics
+
 basedir = path.abspath(path.dirname(__file__))
-SESSION_LENGTH = 30 * 60  # seconds
+SESSION_LENGTH = 60 * 60  # 60 minutes in seconds
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'A super duper badass hard to guess key'  # TODO: get this from env
@@ -53,7 +55,7 @@ def session_required(f):
             request.session = sess
             return f(*args, **kwargs)
         else:
-            response = make_response(redirect(url_for('index', next=request.path)))
+            response = make_response(redirect(url_for('index')))
             response.set_cookie('SESSID', '')
             return response
     return decorated_function
@@ -90,7 +92,7 @@ def index():
             'exp': now + SESSION_LENGTH,
             'iat': now,
             'ip': request.remote_addr,
-            'status': 'created'
+            'status': 'launched'
         }
         db.insert(sess)
         response = make_response(redirect(url_for('run')))
