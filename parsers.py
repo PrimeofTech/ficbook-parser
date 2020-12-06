@@ -144,7 +144,7 @@ class Parser(threading.Thread):
 
         self.getnextpage(pageno, pagenohandler)
         sleep(1)
-        self._driver.close()
+        self.close()
         self.print('Extraction finished. Starting counting...')
         self.extractdata()
         self.print('Finished counting. Quitting...')
