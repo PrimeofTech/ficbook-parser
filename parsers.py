@@ -316,10 +316,11 @@ class Parser(threading.Thread):
         self.print('RESULT: ', self.data)
         self.print(f"Total page read: {self.data['pageCount']}")
         self.print(f"Total fanfics read: {self.data['fanficCount']}")
-        if self.data['fandoms'][0]:
+        if len(self.data['fandoms']) > 0:
             self.print(
                 f"The most liked fandom is '{self.data['fandoms'][0]['name']}' with {self.data['fandoms'][0]['amount']} fanfics read.")
-        self.print(f"The most recently you read '{self.data['fanfics'][0]['title']}'")
+        if len(self.data['fanfics']) > 0:
+            self.print(f"The most recently you read '{self.data['fanfics'][0]['title']}'")
         self.print(f"{'=' * 15} {self.data['user']} {'=' * 15}")
 
     def close(self):
