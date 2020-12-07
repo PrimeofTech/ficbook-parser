@@ -4,4 +4,4 @@
 - [ ] log IP and User-Agent for security and analytics
 - [ ] get security related keys from environmental variables
 - [ ] make backend components behaviour depend on environment (development or production)
-- [ ] fix behaviour of frontend when page is reloaded and parsing is continuing 
+- [ ] fix: when parser is scraping and page is reloaded, it does not automatically show loading screen

@@ -316,7 +316,6 @@
             sendData('/status', 'GET').then(async response => {
                 console.log('Status: ', response.status);
                 loading_change(response.status);
-                // FIXME: when parser is scraping and page is reloaded, it does not automatically show loading screen
                 switch (response.status) {
                     case 'launched':
                         hide_welcome();
