@@ -1,0 +1,7 @@
+- [ ] check if parsers close automatically on error (or session end), if not there should be implement automatic removal of those parsers
+- [ ] status report on auto close
+- [ ] implement error handling (eg. page reload) for network connection losses
+- [ ] log IP and User-Agent for security and analytics
+- [ ] get security related keys from environmental variables
+- [ ] make backend components behaviour depend on environment (development or production)
+- [ ] fix behaviour of frontend when page is reloaded and parsing is continuing 
