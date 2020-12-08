@@ -1,3 +1,4 @@
+- [ ] change database from tinydb to firestore or mongodb to make system reload/update -proof
 - [ ] check if parsers close automatically on error (or session end), if not there should be implement automatic removal of those parsers
 - [ ] status report on auto close
 - [ ] implement error handling (eg. page reload) for network connection losses
