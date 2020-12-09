@@ -10,13 +10,11 @@ import random
 
 from parsers import Parser
 
-# TODO: log IP and User-Agent for security and analytics
-
 basedir = path.abspath(path.dirname(__file__))
 SESSION_LENGTH = 60 * 60  # 60 minutes in seconds
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'A super duper badass hard to guess key'  # TODO: get this from env
+app.config['SECRET_KEY'] = 'A super duper badass hard to guess key'
 db = TinyDB('data/db.json')
 Session = Query()
 
@@ -124,7 +122,7 @@ def login():
         'uname': uname,
         'status': 'launched'
     }, Session.id == request.id)
-    Parser(request.id, uname, upswd, headless=True, verbose=True).start()  # TODO: headless=True
+    Parser(request.id, uname, upswd, headless=False, verbose=True).start()
     return dumps({'OK': True})
 
 
