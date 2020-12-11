@@ -6,3 +6,4 @@
 - [ ] get security related keys from environmental variables
 - [ ] make backend components behaviour depend on environment (development or production)
 - [ ] fix: when parser is scraping and page is reloaded, it does not automatically show loading screen
+- [ ] fix: after entering password for account with long readlist, the login section shows up again after a couple of seconds

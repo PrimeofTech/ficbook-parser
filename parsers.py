@@ -14,9 +14,9 @@ import platform
 import json
 import time
 
-from tinydb import TinyDB, Query
-db = TinyDB('data/db.json')
-Session = Query()
+from database import Sessions
+
+Sessions = Sessions()
 
 
 class Parser(threading.Thread):
@@ -46,7 +46,7 @@ class Parser(threading.Thread):
     def setstatus(self, status):
         if not self.databasereport:
             return
-        db.update({'status': status}, Session.id == self.id)
+        Sessions[self.id] = {'status': status}
 
     def print(self, *text):
         content = ''
@@ -83,7 +83,7 @@ class Parser(threading.Thread):
         self.setstatus('parser:extraction_successful')
         self.print('Extraction was successful... Finishing!')
         if self.databasereport:
-            db.update({'data': data}, Session.id == self.id)
+            Sessions[self.id] = {'data': data}
         self.savetojson()
         return True, data
 
@@ -334,6 +334,7 @@ UPSWD = ''
 if __name__ == '__main__':
     # Testing multi-threading capabilities
     import uuid
+
     for i in range(4):
         print(f'Starting parser #{i + 1}')
         Parser(uuid.uuid4().hex, UNAME, UPSWD, headless=False, verbose=True, databasereport=False).start()

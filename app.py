@@ -9,14 +9,14 @@ import time
 import random
 
 from parsers import Parser
+from database import Sessions
 
 basedir = path.abspath(path.dirname(__file__))
 SESSION_LENGTH = 60 * 60  # 60 minutes in seconds
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'A super duper badass hard to guess key'
-db = TinyDB('data/db.json')
-Session = Query()
+Sessions = Sessions()
 
 
 def get_random_string(length=64, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'):
@@ -44,7 +44,7 @@ def session_required(f):
     def decorated_function(*args, **kwargs):
         if haskey(request.cookies, 'SESSID', checkempty=True):
             sid = request.cookies['SESSID']
-            sess = db.get(Session.id == request.cookies['SESSID'])
+            sess = Sessions[sid]
             if sess and sess['exp'] <= int(time.time()):
                 response = make_response(redirect(url_for('index')))
                 response.set_cookie('SESSID', '')
@@ -92,7 +92,7 @@ def index():
             'ip': request.remote_addr,
             'status': 'launched'
         }
-        db.insert(sess)
+        Sessions[sid] = sess
         response = make_response(redirect(url_for('run')))
         response.set_cookie('SESSID', sid, max_age=SESSION_LENGTH,
                             # secure=True
@@ -117,20 +117,19 @@ def login():
         return dumps({'OK': False}), 400
     uname = request.json['uname']
     upswd = request.json['upswd']
-    sess = db.get(Session.id == request.id)
-    db.update({
+    Sessions[request.id] = {
         'uname': uname,
         'status': 'launched'
-    }, Session.id == request.id)
-    Parser(request.id, uname, upswd, headless=False, verbose=True).start()
+    }
+    Parser(request.id, uname, upswd, headless=True, verbose=True).start()
     return dumps({'OK': True})
 
 
 @app.route('/status')
 @session_required
 def status():
-    session = db.get(Session.id == request.id)
-    if session is None:
+    session = Sessions[request.id]
+    if not session:
         return dumps({'OK': False}), 500
     return dumps({'status': session['status']})
 
@@ -138,8 +137,8 @@ def status():
 @app.route('/result')
 @session_required
 def result():
-    session = db.get(Session.id == request.cookies['SESSID'])
-    if session is None:
+    session = Sessions[request.id]
+    if not session:
         return dumps({'OK': False}), 500
     if session['status'] != 'parser:extraction_successful':
         return dumps({'OK': True, 'data': {}})
