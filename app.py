@@ -4,7 +4,6 @@ from flask import Flask, request, make_response, render_template, redirect, url_
 from os import path
 from datetime import datetime
 from json import dumps
-from tinydb import TinyDB, Query
 import time
 import random
 
