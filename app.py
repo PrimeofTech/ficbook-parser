@@ -131,7 +131,7 @@ def status():
     session = Sessions[request.id]
     if not session:
         return dumps({'OK': False}), 500
-    return dumps({'status': session['status']})
+    return dumps({'OK': True, 'status': session['status']})
 
 
 @app.route('/result')
