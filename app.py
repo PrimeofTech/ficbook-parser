@@ -1,8 +1,7 @@
 import hashlib
 from functools import wraps
 from flask import Flask, request, make_response, render_template, redirect, url_for
-from os import path
-from datetime import datetime
+from os import path, getenv
 from json import dumps
 import time
 import random
@@ -11,10 +10,12 @@ from parsers import Parser
 from database import Sessions
 
 basedir = path.abspath(path.dirname(__file__))
-SESSION_LENGTH = 60 * 60  # 60 minutes in seconds
+SERVER_NAME = getenv('SERVER_NAME', 'test-srv-1')
+SESSION_LENGTH = int(getenv('SESSION_LENGTH', 60 * 60))  # 60 minutes in seconds
+ENVIRONMENT = getenv('ENVIRONMENT', 'development')
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'A super duper badass hard to guess key'
+app = Flask(__name__, static_folder='static', static_url_path='/static')
+app.config['SECRET_KEY'] = getenv('SECRET_KEY')
 Sessions = Sessions()
 
 
@@ -58,34 +59,22 @@ def session_required(f):
     return decorated_function
 
 
-def redirect_dest(fallback):
-    dest = request.args.get('next')
-    print(dest)
-    try:
-        dest_url = url_for(dest)
-    except Exception:
-        return redirect(fallback)
-    return redirect(dest_url)
-
-
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'GET':
-
-        # TEMPORARY!!!
-        response = make_response(render_template('index.html'))
-        response.set_cookie('SESSID', '')
-        return response
-
         if haskey(request.cookies, 'SESSID', checkempty=True):
-            return 'existing sessid, <a href="/run">continue?</a>'
-        return render_template('index.html')
+            return redirect('/run')
+        if 'ru' in request.headers['Accept-Language']:
+            response = make_response(render_template('index.ru.html'))
+        else:
+            response = make_response(render_template('index.html'))
+        return response
     elif request.method == 'POST':
         sid = get_random_string()
         now = int(time.time())
         sess = {
             'id': sid,
-            'iss': 'test-srv-1', 'sub': 'session', 'aud': 'filtered',  # statics
+            'iss': SERVER_NAME, 'sub': 'session', 'aud': 'filtered',  # statics
             'exp': now + SESSION_LENGTH,
             'iat': now,
             'ip': request.remote_addr,
@@ -94,18 +83,24 @@ def index():
         Sessions[sid] = sess
         response = make_response(redirect(url_for('run')))
         response.set_cookie('SESSID', sid, max_age=SESSION_LENGTH,
-                            # secure=True
-                            )
+                            secure=(True if getenv('ENVIRONMENT', 'development') == 'production' else False))
         return response
+
+
+@app.route('/clear-session')
+def clear_session():
+    response = make_response(redirect(url_for('index')))
+    response.set_cookie('SESSID', '')
+    return response
 
 
 @app.route('/run', methods=['GET', 'POST'])
 @session_required
 def run():
-    stats = f"You are authorized with SESSID: {request.id} " \
-           f"which was initialized at {datetime.fromtimestamp(request.session['iat'])} " \
-           f"and expires at {datetime.fromtimestamp(request.session['exp'])}."
-    response = make_response(render_template('gui.html', stats=stats))
+    if 'ru' in request.headers['Accept-Language']:
+        response = make_response(render_template('gui.ru.html'))
+    else:
+        response = make_response(render_template('gui.html'))
     return response
 
 
@@ -120,7 +115,8 @@ def login():
         'uname': uname,
         'status': 'launched'
     }
-    Parser(request.id, uname, upswd, headless=True, verbose=True).start()
+    Parser(request.id, uname, upswd, headless=(True if getenv('ENVIRONMENT', 'development') == 'production' else False),
+           verbose=(False if getenv('ENVIRONMENT', 'development') == 'production' else True)).start()
     return dumps({'OK': True})
 
 
@@ -137,12 +133,11 @@ def status():
 @session_required
 def result():
     session = Sessions[request.id]
-    if not session:
-        return dumps({'OK': False}), 500
-    if session['status'] != 'parser:extraction_successful':
-        return dumps({'OK': True, 'data': {}})
-    return dumps({'OK': True, 'data': session['data']})
+    try:
+        return dumps({'OK': True, 'data': session['data']})
+    except:
+        return dumps({'OK': False})
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', debug=(False if getenv('ENVIRONMENT', 'development') == 'production' else True))

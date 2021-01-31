@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+        <meta charset="UTF-8">
+        <title>Парсер Книги Фанфиков</title>
+        <link rel="stylesheet" href="/static/styles.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div id="status"></div>
+    <div id="result"></div>
+    <section class="welcome">
+      <span>Парсер Книги Фанфиков</span>
+    </section>
+    <section class="login hidden">
+      <form action="" onsubmit="return false">
+        <input
+          type="text"
+          name="uname"
+          id="uname"
+          placeholder="Ваше имя пользователя"
+          required
+       >
+        <input
+          type="password"
+          name="upswd"
+          id="upswd"
+          placeholder="Ваш пароль"
+          required
+       >
+        <h3 id="errmsg" class="hidden">Неверные учетные данные</h3>
+        <p>
+          Отправляя, вы соглашаетесь с тем, что только вы несете ответственность за любые
+           последствия, которые могут быть вызваны этой программой.
+        </p>
+        <input type="submit" value="Отправить" id="submit">
+      </form>
+    </section>
+    <section class="loading hidden">
+      <div id="loading-text">Начинаем</div>
+      <div id="loading-dots">...</div>
+    </section>
+    <section class="results hidden">
+      <div class="container">
+        <div class="profile">
+          <img src="" alt="Avatar">
+          <span>Имя пользователя</span>
+        </div>
+        <div class="content">
+          <ul>
+            Общая информация:
+            <li>Всего страниц прочитано: <span>23635</span></li>
+            <li>Всего фанфиков прочитано: <span>536</span></li>
+            <li>
+              The most liked fandom is '<span>Fanfic</span>' with
+              <span>470</span> fanfics read.
+            </li>
+            <li>
+              The most recently you read '<span>An interesting title</span>'
+              from '<span>Just another fandom</span>'.
+            </li>
+          </ul>
+          <ul>
+            Fandom info:
+            <li>Total pages read: <span>23635</span></li>
+            <li>Total fanfics read: <span>536</span></li>
+            <li>
+              The most liked fandom is <span>Fanfic</span> with
+              <span>470</span> fanfics read.
+            </li>
+            <li>
+              The most recently you read '<span>An interesting title</span>'
+              from '<span>Just another fandom</span>'.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+    <script src="/static/index.js"></script>
+  </body>
+</html>

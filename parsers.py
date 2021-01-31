@@ -21,7 +21,7 @@ Sessions = Sessions()
 
 class Parser(threading.Thread):
     def __init__(self, sid, uname='', upswd='', headless=True, auto=True, verbose=False, databasereport=True,
-                 chromeinpath=True):
+                 chromeinpath=False):
         self.id = str(sid)
         self.uname = uname
         self.upswd = upswd
@@ -100,12 +100,12 @@ class Parser(threading.Thread):
             chrome_options.add_experimental_option("excludeSwitches", ['enable-automation'])
             if self.headless:
                 chrome_options.add_argument('--headless')
-            if self.chromeinpath or (environ.get('chromeinpath') and environ.get('chromeinpath')):
+            if self.chromeinpath or (environ.get('chromeinpath') and bool(environ.get('chromeinpath')) is True):
                 chrome_options.binary_location = ''
                 self._driver = webdriver.Chrome(options=chrome_options)
             else:
                 system = platform.system()
-                executable = 'drivers/chromedriver86_'
+                executable = 'drivers/chromedriver88_'
                 if system == 'Windows':
                     executable += 'win32.exe'
                 elif system == 'Darwin':
@@ -119,11 +119,11 @@ class Parser(threading.Thread):
                 executable = os.path.abspath(executable)
                 if environ.get('RESOURCEPATH'):
                     executable = os.path.join(environ.get('RESOURCEPATH'), executable)
-                self.print('Driver Path ', executable)
+                # self.print('Driver Path ', executable)
                 self._driver = webdriver.Chrome(executable_path=executable, options=chrome_options)
         except SessionNotCreatedException as err:
             self.print(
-                'FATAL ERROR: Please check that you have Chrome browser installed with version 86.')
+                'FATAL ERROR: Please check that you have Chrome browser installed with version 88.')
             self.print(err)
             sys.exit()
 
