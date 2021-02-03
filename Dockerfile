@@ -23,6 +23,8 @@ ENV DISPLAY=:99
 ENV FLASK_APP=simple-ficbook-parser-python
 ENV chromeinpath=True
 
+EXPOSE 9090
+
 RUN pip install --upgrade pip
 
 RUN pip install -r requirements.txt
