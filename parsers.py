@@ -59,33 +59,38 @@ class Parser(threading.Thread):
             print(f"[{i}] {content}")
 
     def run(self):
-        self.initdriver()
-        self.setstatus('parser:driver_initialized')
-        self.print('Driver initialized...')
-        # self.checkindex()
-        # self.setstatus('parser:network_checked')
-        # self.print('Network checked')
-        if not self.login(self.uname, self.upswd):
-            self.setstatus('parser:login_error')
-            self.print('Login failed... Aborting!')
-            self.close()
-            return False, 'login_error'
-        self.setstatus('parser:login_successful')
-        self.print('Login was successful...')
-        self.setstatus('parser:starting_extraction')
-        self.print('Launching extraction...')
-        success, data = self.startextraction(lambda pageno: self.setstatus(f'parser:extracting_page:{pageno}'))
-        if not success:
-            self.setstatus('parser:extraction_error')
-            self.print('Extraction failed... Aborting!')
-            self.close()
-            return False, 'extraction_error'
-        self.setstatus('parser:extraction_successful')
-        self.print('Extraction was successful... Finishing!')
-        if self.databasereport:
-            Sessions[self.id] = {'data': data}
-        self.savetojson()
-        return True, data
+        try:
+            self.initdriver()
+            self.setstatus('parser:driver_initialized')
+            self.print('Driver initialized...')
+            # self.checkindex()
+            # self.setstatus('parser:network_checked')
+            # self.print('Network checked')
+            if not self.login(self.uname, self.upswd):
+                self.setstatus('parser:login_error')
+                self.print('Login failed... Aborting!')
+                self.close()
+                return False, 'login_error'
+            self.setstatus('parser:login_successful')
+            self.print('Login was successful...')
+            self.setstatus('parser:starting_extraction')
+            self.print('Launching extraction...')
+            success, data = self.startextraction(lambda pageno: self.setstatus(f'parser:extracting_page:{pageno}'))
+            if not success:
+                self.setstatus('parser:extraction_error')
+                self.print('Extraction failed... Aborting!')
+                self.close()
+                return False, 'extraction_error'
+            self.setstatus('parser:extraction_successful')
+            self.print('Extraction was successful... Finishing!')
+            if self.databasereport:
+                Sessions[self.id] = {'data': data}
+            self.savetojson()
+            return True, data
+        except Exception as e:
+            self.setstatus('parser:error')
+            print('PARSER ERROR: ')
+            print(e)
 
     def initdriver(self):
         try:

@@ -6,6 +6,17 @@
 * {
   font-family: "Roboto Light", Arial, Helvetica, sans-serif;
 }
+@media only screen and (max-width: 700px) {
+  h1 {
+    font-size: 2rem;
+  }
+  p, input, div {
+    font-size: 1.2rem;
+  }
+  .results .container {
+    width: calc(100% - 70px);
+  }
+}
 body {
   margin: 0;
   padding: 0;
@@ -20,6 +31,9 @@ body {
 section {
   width: 100%;
   min-height: 100vh;
+}
+p {
+  padding: 10px 20px;
 }
 .description {
   display: flex;
@@ -120,11 +134,6 @@ section {
   animation: results-show;
   animation-duration: 0.5s;
   animation-timing-function: ease-in;
-}
-@media only screen and (max-width: 700px) {
-  .results .container {
-    width: 90%;
-  }
 }
 .results .profile {
   /*width: 100%;*/

@@ -12,10 +12,10 @@ from database import Sessions
 basedir = path.abspath(path.dirname(__file__))
 SERVER_NAME = getenv('SERVER_NAME', 'test-srv-1')
 SESSION_LENGTH = int(getenv('SESSION_LENGTH', 60 * 60))  # 60 minutes in seconds
-ENVIRONMENT = getenv('ENVIRONMENT', 'development')
+ENV = getenv('ENV', 'production')
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.config['SECRET_KEY'] = getenv('SECRET_KEY')
+app.config['SECRET_KEY'] = getenv('SECRET_KEY', 'secure')
 Sessions = Sessions()
 
 
@@ -45,7 +45,7 @@ def session_required(f):
         if haskey(request.cookies, 'SESSID', checkempty=True):
             sid = request.cookies['SESSID']
             sess = Sessions[sid]
-            if sess and sess['exp'] <= int(time.time()):
+            if not sess or sess['exp'] <= int(time.time()):
                 response = make_response(redirect(url_for('index')))
                 response.set_cookie('SESSID', '')
                 return response
@@ -83,7 +83,8 @@ def index():
         Sessions[sid] = sess
         response = make_response(redirect(url_for('run')))
         response.set_cookie('SESSID', sid, max_age=SESSION_LENGTH,
-                            secure=(True if getenv('ENVIRONMENT', 'development') == 'production' else False))
+                            # secure=(False if ENV == 'development' else True)
+                            )
         return response
 
 
@@ -115,8 +116,8 @@ def login():
         'uname': uname,
         'status': 'launched'
     }
-    Parser(request.id, uname, upswd, headless=(True if getenv('ENVIRONMENT', 'development') == 'production' else False),
-           verbose=(False if getenv('ENVIRONMENT', 'development') == 'production' else True)).start()
+    Parser(request.id, uname, upswd, headless=(False if ENV == 'development' else True),
+           verbose=(True if ENV == 'development' else False)).start()
     return dumps({'OK': True})
 
 
@@ -139,5 +140,7 @@ def result():
         return dumps({'OK': False})
 
 
+application = app
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=(False if getenv('ENVIRONMENT', 'development') == 'production' else True))
+    app.run(host='0.0.0.0', debug=(False if ENV == 'production' else True))

@@ -1,8 +1,9 @@
 let LOADING_INTERVAL = "stopped",
 	GETSTATUS_INTERVAL,
-	FINISHED = false;
+	STOPPED = false;
 document.getElementById("submit").addEventListener("click", submit);
-GETSTATUS_INTERVAL = setInterval(getstatus, 2000);
+// GETSTATUS_INTERVAL = setInterval(getstatus, 2000);
+getstatus();
 
 function hide_welcome() {
 	const element = document.querySelector(".welcome");
@@ -80,53 +81,72 @@ function loading_change(text) {
 }
 
 async function getstatus() {
-	if (FINISHED) return clearInterval(GETSTATUS_INTERVAL);
+	if (STOPPED) return;
 	sendData("/status", "GET").then(async (response) => {
-		console.log("Status: ", response.status);
-		loading_change(response.status);
-		switch (response.status) {
-			case "launched":
+		const status = response.status;
+		console.log("Status: ", status);
+		loading_change(status);
+		if (status === "launched") {
+			hide_welcome();
+		} else if (status === "parser:created" || status === "parser:driver_initialized" ||
+														status === "parser:login_successful") {
 				hide_welcome();
-				break;
-			case "parser:driver_initialized":
-				if (LOADING_INTERVAL === "stopped") {
-					hide_welcome();
-					hide_login();
-					loading_start();
-				}
-				break;
-			case "parser:login_error":
-				login_error();
-				break;
-			case "parser:extraction_successful":
-				await sendData("/result", "GET").then((response) => {
-					FINISHED = true;
-					console.log("Result: ", response.data);
-					hide_welcome();
-					hide_login();
-					loading_stop();
-					showresults(response.data);
-				});
+				hide_login();
+			if (LOADING_INTERVAL === "stopped") {
+				loading_start();
+			}
+		} else if (status === "parser:login_error") {
+			login_error();
+		} else if (status === "parser:extraction_successful") {
+			STOPPED = true;
+			await sendData("/result", "GET").then((response) => {
+				console.log("Result: ", response.data);
+				hide_welcome();
+				hide_login();
+				loading_stop();
+				showresults(response.data);
+			});
+		} else if (status === "parser:error") {
+			STOPPED = true;
+			if (document.querySelector('html').getAttribute('lang') === 'ru') {
+				alert('Обнаружена ошибка. \n Пожалуйста, попробуйте позже. \n \n' +
+					'Если проблема не исчезнет, вы можете связаться с разработчиком: ' + 'ut8cskef' + '@' + 'anonaddy.me' + ' \n' +
+					'Не забудьте добавить подробности о том, что вы делали до появления ошибки. \n \n' +
+					'Теперь вы будете перенаправлены на домашнюю страницу.');
+			} else {
+				alert('Encountered error. \n Please, try again later. \n \n' +
+					'If problem persists you may contact the developer: ' + 'ut8cskef' + '@' + 'anonaddy.me' + ' \n' +
+					'Do not forget to add details about what you have done before error appeared. \n \n' +
+					'Now you will be forwarded to homepage.');
+			}
+			window.location.href = window.location.origin + '/clear-session';
+		} else {
+			console.warn('UNHANDLED STATUS: ', status)
 		}
 	});
+	await new Promise(resolve => setTimeout(resolve, 1000));
+	return getstatus();
 }
 
 async function submit() {
-	clearInterval(GETSTATUS_INTERVAL);
+	// clearInterval(GETSTATUS_INTERVAL);
+	STOPPED = true;
 	hide_login();
 	loading_start();
 	const uname = document.getElementById("uname").value.trim();
 	const upswd = document.getElementById("upswd").value.trim();
 	if (uname === "" || upswd === "") return;
 	console.log("submit");
-	FINISHED = false;
+	STOPPED = false;
 	sendData("/login", "POST", {
 		uname: uname,
 		upswd: upswd,
 	}).then((response) => {
 		console.log(response);
 	});
-	GETSTATUS_INTERVAL = setInterval(getstatus, 1000);
+	// GETSTATUS_INTERVAL = setInterval(getstatus, 1000);
+	await new Promise(resolve => setTimeout(resolve, 1000));
+	return getstatus();
 }
 
 async function sendData(url = "", method = "POST", data = "") {
