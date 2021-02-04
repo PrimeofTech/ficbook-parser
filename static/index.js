@@ -82,14 +82,14 @@ function loading_change(text) {
 
 async function getstatus() {
 	if (STOPPED) return;
-	sendData("/status", "GET").then(async (response) => {
+	await sendData("/status", "GET").then(async (response) => {
 		const status = response.status;
 		console.log("Status: ", status);
 		loading_change(status);
 		if (status === "launched") {
 			hide_welcome();
 		} else if (status === "parser:created" || status === "parser:driver_initialized" ||
-														status === "parser:login_successful") {
+				   status === "parser:login_successful" || status.startsWith("parser:extracting")) {
 				hide_welcome();
 				hide_login();
 			if (LOADING_INTERVAL === "stopped") {
@@ -125,7 +125,7 @@ async function getstatus() {
 		}
 	});
 	await new Promise(resolve => setTimeout(resolve, 1000));
-	return getstatus();
+	if (!STOPPED) return getstatus();
 }
 
 async function submit() {

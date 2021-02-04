@@ -6,17 +6,6 @@
 * {
   font-family: "Roboto Light", Arial, Helvetica, sans-serif;
 }
-@media only screen and (max-width: 700px) {
-  h1 {
-    font-size: 2rem;
-  }
-  p, input, div {
-    font-size: 1.2rem;
-  }
-  .results .container {
-    width: calc(100% - 70px);
-  }
-}
 body {
   margin: 0;
   padding: 0;
@@ -221,4 +210,16 @@ input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px #f6ecda inset !important;
+}
+
+@media only screen and (max-width: 700px) {
+  h1 {
+    font-size: 2rem;
+  }
+  p, input, div {
+    font-size: 1.2rem;
+  }
+  .results .container {
+    width: calc(100% - 70px);
+  }
 }
