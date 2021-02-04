@@ -117,7 +117,7 @@ def login():
         'status': 'launched'
     }
     Parser(request.id, uname, upswd, headless=(False if ENV == 'development' else True),
-           verbose=(True if ENV == 'development' else False)).start()
+           verbose=True).start()
     return dumps({'OK': True})
 
 
